@@ -2,7 +2,7 @@
 # Setup script for Claude Code skills on macOS
 # Usage: curl -fsSL https://raw.githubusercontent.com/sam-ueckert/claude-skills/main/setup-mac.sh | bash
 #   or:  bash setup-mac.sh
-set -euo pipefail
+set -uo pipefail
 
 SKILLS_DIR="$HOME/repos/claude-skills"
 OBSIDIAN_DIR="$HOME/repos/obsidian-skills"
@@ -74,16 +74,22 @@ if command -v mmdc &>/dev/null; then
     ok "mermaid-cli already installed ($(mmdc --version))"
 else
     echo "  Installing @mermaid-js/mermaid-cli (this may take a minute)..."
-    npm install -g @mermaid-js/mermaid-cli 2>&1 | tail -1
-    ok "mermaid-cli installed"
+    if npm install -g @mermaid-js/mermaid-cli 2>&1 | tail -3; then
+        ok "mermaid-cli installed"
+    else
+        warn "mermaid-cli install failed — try manually: npm install -g @mermaid-js/mermaid-cli"
+    fi
 fi
 
 if command -v defuddle &>/dev/null; then
     ok "defuddle already installed"
 else
     echo "  Installing defuddle..."
-    npm install -g defuddle 2>&1 | tail -1
-    ok "defuddle installed"
+    if npm install -g defuddle 2>&1 | tail -3; then
+        ok "defuddle installed"
+    else
+        warn "defuddle install failed — try manually: npm install -g defuddle"
+    fi
 fi
 
 echo ""
