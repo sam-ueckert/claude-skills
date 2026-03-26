@@ -1,42 +1,95 @@
-# claude-skills
+# Claude Skills — Automation Engineer Toolkit
 
-Custom [Claude Code skills](https://code.claude.com/docs/en/skills) following the [AgentSkills.io](https://agentskills.io) open standard. These skills work in Claude Code CLI, OpenClaw, and any other AgentSkills-compatible agent.
+Custom Claude skills for infrastructure automation, cloud provisioning, and DevOps workflows.
 
-## Skills
+## Skills Index
 
-| Skill | Status | Description |
-|---|---|---|
-| [mermaid](mermaid/) | ✅ Ready | Render diagrams (flowcharts, mind maps, ERDs, sequence, Gantt, etc.) to PNG/SVG |
-| [lucidchart](lucidchart/) | 🚧 Planned | Manage Lucidchart docs via REST API (create, export, share) |
+| Skill | Description | Dependencies |
+|-------|-------------|--------------|
+| [secret-vault](secret-vault/) | Encrypted API key/credential storage (AES-256-GCM) | `cryptography` |
+| [playbook-generator](playbook-generator/) | Standards-conformant playbook/runbook/SOP generation | — |
+| [cloud-provisioning](cloud-provisioning/) | AWS/Azure/GCP credential onboarding with least-privilege IAM | Cloud CLIs |
+| [env-scaffolder](env-scaffolder/) | Project scaffolding by type (Python, Node, Terraform, Docker) | — |
+| [github](github/) | GitHub repo creation, push, Actions secrets, CI/CD | `pynacl` |
+| [gitlab](gitlab/) | GitLab project creation, push, CI variables, self-hosted | — |
+
+## How Skills Connect
+
+```
+cloud-provisioning ──► secret-vault ◄── github
+                           │         ◄── gitlab
+                           ▼
+                    env-scaffolder ──► github/gitlab (CI templates)
+                           │
+                           ▼
+                   playbook-generator (rotation playbooks)
+```
+
+- **secret-vault** is the hub — other skills store and retrieve credentials through it
+- **cloud-provisioning** onboards cloud credentials, stores them in the vault
+- **github/gitlab** read PATs from the vault, push code, manage CI/CD
+- **env-scaffolder** generates project boilerplate referencing vault key names
+- **playbook-generator** creates operational docs conforming to org standards
 
 ## Quick Start
 
-See [SETUP.md](SETUP.md) for full installation instructions.
-
 ```bash
-# 1. Clone this repo
-git clone https://github.com/sam-ueckert/claude-skills.git
+# 1. Initialize the vault
+pip install cryptography
+python3 secret-vault/scripts/vault.py init --passphrase
 
-# 2. Install mermaid-cli
-npm install -g @mermaid-js/mermaid-cli
+# 2. Onboard to a cloud (ask Claude)
+#    > "Set up my AWS credentials"
 
-# 3. Symlink skills into Claude Code
-ln -sf "$(pwd)/claude-skills/mermaid" ~/.claude/skills/mermaid
-ln -sf "$(pwd)/claude-skills/lucidchart" ~/.claude/skills/lucidchart
+# 3. Store your GitHub PAT
+python3 secret-vault/scripts/vault.py set github.pat ghp_yourtoken
 
-# 4. Use in Claude Code
-# Type /mermaid or just ask Claude to "draw a diagram"
+# 4. Scaffold a project and push it
+#    > "Create a FastAPI project called my-api and push it to GitHub"
 ```
 
-## Platform Support
+## Design Principles
 
-| Platform | Status | Notes |
-|---|---|---|
-| macOS (Apple Silicon) | ✅ | Puppeteer bundles its own Chromium |
-| macOS (Intel) | ✅ | Puppeteer bundles its own Chromium |
-| Linux x86_64 | ✅ | Puppeteer bundles its own Chromium |
-| Linux ARM64 (Pi) | ✅ | Uses system `chromium-browser` via puppeteer-config.json |
+1. **Composable** — skills work standalone and integrate naturally
+2. **Least privilege** — never request more access than needed
+3. **Offline-first** — core functionality works without internet
+4. **Standards-based** — JSON Schema, YAML, OpenAPI over custom formats
+5. **Audit trail** — sensitive actions get logged
 
-## License
+## Repository Structure
 
-MIT
+```
+claude-skills/
+├── README.md                   ← this file
+├── BRAINSTORM.md               ← future skill ideas
+├── secret-vault/
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── schemas/vault-schema.json
+│   └── scripts/vault.py
+├── playbook-generator/
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── schemas/baseline-standard.yaml
+│   ├── schemas/org-standard-template.yaml
+│   └── examples/azure-foundry-deployment.md
+├── cloud-provisioning/
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── schemas/{aws,azure,gcp} policies
+│   └── scripts/verify-credentials.sh
+├── env-scaffolder/
+│   ├── SKILL.md
+│   ├── README.md
+│   └── schemas/project-types.yaml
+├── github/
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── schemas/{workflow-templates,repo-defaults}.yaml
+│   └── scripts/github.py
+└── gitlab/
+    ├── SKILL.md
+    ├── README.md
+    ├── schemas/{pipeline-templates,project-defaults}.yaml
+    └── scripts/gitlab.py
+```

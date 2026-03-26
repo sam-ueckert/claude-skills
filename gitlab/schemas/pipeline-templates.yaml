@@ -1,0 +1,137 @@
+# GitLab CI/CD pipeline templates
+# Selected automatically based on project type from env-scaffolder
+
+templates:
+
+  python:
+    filename: .gitlab-ci.yml
+    content: |
+      stages:
+        - lint
+        - test
+        - build
+
+      lint:
+        stage: lint
+        image: python:3.12-slim
+        script:
+          - pip install ruff
+          - ruff check .
+
+      test:
+        stage: test
+        image: python:3.12-slim
+        script:
+          - pip install -r requirements.txt
+          - pip install pytest
+          - pytest -v
+
+      build:
+        stage: build
+        image: docker:24
+        services:
+          - docker:24-dind
+        script:
+          - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+          - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+        only:
+          - main
+
+  node:
+    filename: .gitlab-ci.yml
+    content: |
+      stages:
+        - lint
+        - test
+        - build
+
+      lint:
+        stage: lint
+        image: node:20-slim
+        script:
+          - npm ci
+          - npm run lint
+
+      test:
+        stage: test
+        image: node:20-slim
+        script:
+          - npm ci
+          - npm test
+
+      build:
+        stage: build
+        image: docker:24
+        services:
+          - docker:24-dind
+        script:
+          - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+          - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+        only:
+          - main
+
+  terraform:
+    filename: .gitlab-ci.yml
+    content: |
+      stages:
+        - validate
+        - plan
+        - apply
+
+      validate:
+        stage: validate
+        image: hashicorp/terraform:latest
+        script:
+          - terraform fmt -check
+          - terraform init
+          - terraform validate
+
+      plan:
+        stage: plan
+        image: hashicorp/terraform:latest
+        script:
+          - terraform init
+          - terraform plan -out=plan.tfplan
+        artifacts:
+          paths:
+            - plan.tfplan
+        only:
+          - merge_requests
+
+      apply:
+        stage: apply
+        image: hashicorp/terraform:latest
+        script:
+          - terraform init
+          - terraform apply -auto-approve plan.tfplan
+        when: manual
+        only:
+          - main
+
+  docker:
+    filename: .gitlab-ci.yml
+    content: |
+      stages:
+        - build
+        - push
+
+      build:
+        stage: build
+        image: docker:24
+        services:
+          - docker:24-dind
+        script:
+          - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+          - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE:latest
+
+      push:
+        stage: push
+        image: docker:24
+        services:
+          - docker:24-dind
+        script:
+          - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+          - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+          - docker push $CI_REGISTRY_IMAGE:latest
+        only:
+          - main

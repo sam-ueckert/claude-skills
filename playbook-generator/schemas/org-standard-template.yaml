@@ -1,0 +1,49 @@
+# Org Standard Template
+# Copy this file to ~/.claude/playbook-standards/{client-name}.yaml
+# and customize for your organization.
+#
+# These settings layer ON TOP of baseline-standard.yaml.
+# Only include fields you want to override or add.
+
+org_name: "ACME Corp"
+
+metadata:
+  required_fields:
+    - jira_ticket        # Add Jira ticket as required (baseline has it optional)
+    - change_request_id  # Add CR number
+  custom_fields:
+    - name: business_unit
+      required: true
+    - name: impact_level
+      required: true
+      allowed_values: [low, medium, high, critical]
+
+naming:
+  pattern: "PB-ACME-{TEAM}-{SEQ:04d}"
+  team_values: [INFRA, SEC, DEV, DATA, PLATFORM]
+
+additional_required_sections:
+  - name: security_impact
+    description: "Assessment of security implications"
+    position: after:scope
+
+  - name: communication_plan
+    description: "Who to notify before, during, and after execution"
+    position: after:prerequisites
+
+  - name: approvals
+    description: "Sign-off chain"
+    position: before:procedure
+    fields:
+      - approver_name
+      - approver_role
+      - approval_date
+      - approval_method   # Jira, email, Slack, verbal
+
+formatting:
+  header_template: |
+    > **ACME Corp — Internal Operations**
+    > Classification: Internal Use Only
+  footer_template: |
+    ---
+    *This document is controlled. Printed copies are uncontrolled.*

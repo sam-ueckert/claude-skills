@@ -1,0 +1,29 @@
+# Default GitLab project settings
+
+project_settings:
+  visibility: private
+  merge_method: merge      # merge | rebase_merge | ff
+  squash_option: default_on
+  remove_source_branch_after_merge: true
+  only_allow_merge_if_pipeline_succeeds: true
+  only_allow_merge_if_all_discussions_are_resolved: true
+
+branch_protection:
+  branch: main
+  push_access_level: no one     # Force MR workflow
+  merge_access_level: maintainers
+  allow_force_push: false
+
+ci_variable_sync:
+  description: >
+    When using secret-vault, CI/CD variables can be auto-synced from the vault
+    using: gitlab.py add-variable --project ns/proj --key NAME --value $(vault.py get key) --masked
+  recommended_variables:
+    - key: DOCKER_REGISTRY_PASSWORD
+      vault_key: gitlab.registry_token
+      masked: true
+      protected: true
+    - key: DEPLOY_TOKEN
+      vault_key: gitlab.deploy_token
+      masked: true
+      protected: true

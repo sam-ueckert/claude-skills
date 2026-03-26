@@ -1,0 +1,31 @@
+# GCP IAM role binding for compute automation
+# Apply with: gcloud projects add-iam-policy-binding PROJECT_ID \
+#   --member="serviceAccount:SA_EMAIL" --role="roles/custom.claudeCompute"
+
+title: Claude Compute Automation
+description: Least-privilege role for compute automation via Claude skills
+stage: GA
+includedPermissions:
+  - compute.instances.list
+  - compute.instances.get
+  - compute.instances.create
+  - compute.instances.delete
+  - compute.instances.start
+  - compute.instances.stop
+  - compute.instances.setTags
+  - compute.instances.setLabels
+  - compute.instances.setMetadata
+  - compute.zones.list
+  - compute.regions.list
+  - compute.firewalls.create
+  - compute.firewalls.delete
+  - compute.firewalls.get
+  - compute.firewalls.list
+  - compute.networks.get
+  - compute.subnetworks.get
+  - run.services.list
+  - run.services.get
+  - run.jobs.run
+  - cloudfunctions.functions.list
+  - cloudfunctions.functions.get
+  - cloudfunctions.functions.call

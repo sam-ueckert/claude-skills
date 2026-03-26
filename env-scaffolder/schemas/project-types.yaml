@@ -1,0 +1,139 @@
+# Project type definitions for env-scaffolder
+# Each type defines: directory structure, config files, dependencies, and CI templates
+
+project_types:
+
+  python-api:
+    display_name: "Python API"
+    description: "FastAPI or Flask REST API with Docker and testing"
+    options:
+      framework: { choices: [fastapi, flask], default: fastapi }
+      ci_provider: { choices: [github, gitlab, none], default: github }
+      python_version: { default: "3.12" }
+    directories:
+      - src/
+      - tests/
+      - .github/workflows/  # conditional on ci_provider
+    files:
+      - path: pyproject.toml
+        template: python-api/pyproject.toml.j2
+      - path: requirements.txt
+        template: python-api/requirements.txt.j2
+      - path: Dockerfile
+        template: shared/Dockerfile-python.j2
+      - path: docker-compose.yaml
+        template: shared/docker-compose.j2
+      - path: .env.example
+        template: shared/env-example.j2
+      - path: .gitignore
+        template: shared/gitignore-python
+      - path: src/__init__.py
+        content: ""
+      - path: src/main.py
+        template: python-api/main.py.j2
+      - path: src/config.py
+        template: python-api/config.py.j2
+      - path: tests/__init__.py
+        content: ""
+      - path: tests/test_main.py
+        template: python-api/test_main.py.j2
+      - path: README.md
+        template: shared/readme.md.j2
+    env_vars:
+      - name: DATABASE_URL
+        vault_key: null
+        example: "postgresql://localhost:5432/mydb"
+      - name: API_SECRET_KEY
+        vault_key: "project.api_secret"
+        example: "change-me"
+
+  node-api:
+    display_name: "Node.js API"
+    description: "Express or Fastify REST API with Docker and testing"
+    options:
+      framework: { choices: [express, fastify], default: express }
+      ci_provider: { choices: [github, gitlab, none], default: github }
+      node_version: { default: "20" }
+    directories:
+      - src/
+      - tests/
+    files:
+      - path: package.json
+        template: node-api/package.json.j2
+      - path: Dockerfile
+        template: shared/Dockerfile-node.j2
+      - path: docker-compose.yaml
+        template: shared/docker-compose.j2
+      - path: .env.example
+        template: shared/env-example.j2
+      - path: .gitignore
+        template: shared/gitignore-node
+      - path: src/index.js
+        template: node-api/index.js.j2
+      - path: src/config.js
+        template: node-api/config.js.j2
+      - path: tests/index.test.js
+        template: node-api/test.js.j2
+      - path: README.md
+        template: shared/readme.md.j2
+
+  terraform:
+    display_name: "Terraform IaC"
+    description: "Infrastructure as Code with module structure and remote state"
+    options:
+      cloud: { choices: [aws, azure, gcp], default: aws }
+      backend: { choices: [s3, azurerm, gcs, local], default: local }
+    directories:
+      - modules/
+      - environments/dev/
+      - environments/prod/
+    files:
+      - path: main.tf
+        template: terraform/main.tf.j2
+      - path: variables.tf
+        template: terraform/variables.tf.j2
+      - path: outputs.tf
+        template: terraform/outputs.tf.j2
+      - path: backend.tf
+        template: terraform/backend.tf.j2
+      - path: terraform.tfvars.example
+        template: terraform/tfvars-example.j2
+      - path: .gitignore
+        template: shared/gitignore-terraform
+      - path: README.md
+        template: shared/readme.md.j2
+
+  docker-compose:
+    display_name: "Docker Compose Multi-Service"
+    description: "Multi-container application with networking and volumes"
+    options:
+      services: { type: list, default: [app, db, redis] }
+    directories:
+      - services/app/
+      - services/db/
+    files:
+      - path: docker-compose.yaml
+        template: docker-compose/compose.yaml.j2
+      - path: .env.example
+        template: shared/env-example.j2
+      - path: .gitignore
+        template: shared/gitignore-docker
+      - path: README.md
+        template: shared/readme.md.j2
+
+  claude-skill:
+    display_name: "Claude Skill"
+    description: "Scaffold a new Claude skill with proper structure"
+    options:
+      has_scripts: { type: bool, default: true }
+      has_schemas: { type: bool, default: true }
+    directories:
+      - schemas/
+      - scripts/
+      - examples/
+      - assets/
+    files:
+      - path: SKILL.md
+        template: claude-skill/SKILL.md.j2
+      - path: README.md
+        template: claude-skill/readme.md.j2
