@@ -1,133 +1,106 @@
 # Setup Guide
 
-Complete setup instructions for all skills in this repo.
-
-## Prerequisites
-
-- **Node.js** v18+ (`node --version`)
-- **npm** v8+ (`npm --version`)
-- **Claude Code** CLI installed ([docs](https://code.claude.com/docs/en))
-
-## 1. Clone the Repo
+## Quick Start
 
 ```bash
-git clone https://github.com/sam-ueckert/claude-skills.git
+git clone https://github.com/<your-fork>/claude-skills.git
 cd claude-skills
 ```
 
-## 2. Install Dependencies
-
-### Mermaid
+### macOS / Linux
 
 ```bash
-npm install -g @mermaid-js/mermaid-cli
+bash setup.sh
 ```
 
-Verify:
-```bash
-mmdc --version
-# Should output 11.x.x or higher
+### Windows (PowerShell)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-#### Platform-specific notes
+The setup script will:
+1. Check prerequisites (Node.js, npm, git, python3)
+2. Install npm dependencies (mermaid-cli, defuddle)
+3. Install Python dependencies (cryptography for secret-vault)
+4. Auto-discover all skills (any directory with a `SKILL.md`) and symlink them into `~/.claude/skills/`
+5. Verify mermaid rendering works
 
-**macOS (Apple Silicon & Intel):**
-- No extra setup needed. Puppeteer downloads a compatible Chromium binary automatically during `npm install`.
-- If you see "Failed to launch browser" errors, try: `npx puppeteer browsers install chrome`
+## Prerequisites
 
-**Linux x86_64:**
-- Same as Mac — Puppeteer handles Chromium.
-- If on a headless server, you may need display libs: `sudo apt install -y libnss3 libatk-bridge2.0-0 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libasound2`
+| Dependency | Required by | Install |
+|---|---|---|
+| Node.js v18+ | mermaid | `brew install node` / `winget install OpenJS.NodeJS.LTS` |
+| npm | mermaid, defuddle | comes with Node.js |
+| git | setup script | `xcode-select --install` / `winget install Git.Git` |
+| Python 3 | secret-vault | `brew install python` / `winget install Python.Python.3.12` |
+| curl + jq | lucidchart, skill-index | pre-installed on macOS; `sudo apt install curl jq` on Linux |
 
-**Linux ARM64 (Raspberry Pi, etc.):**
-- Puppeteer does **not** bundle ARM64 Chromium. Install system Chromium:
-  ```bash
-  sudo apt install -y chromium-browser
-  ```
-- The render script (`mermaid/scripts/render.sh`) detects Linux and automatically uses `mermaid/puppeteer-config.json` which points to `/usr/bin/chromium-browser`.
-- If your Chromium is at a different path, edit `puppeteer-config.json`:
-  ```json
-  {
-    "executablePath": "/path/to/your/chromium",
-    "args": ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"]
-  }
-  ```
+## Manual Setup
 
-### Lucidchart (when ready)
+If you prefer not to use the setup script:
 
-Lucidchart requires an API key. See [Lucidchart setup](#lucidchart-api-key) below.
-
-## 3. Symlink Skills into Claude Code
-
-Claude Code discovers skills from `~/.claude/skills/` (personal) or `.claude/skills/` (per-project).
-
-### Option A: Personal skills (all projects)
+### 1. Install Dependencies
 
 ```bash
-# From the repo root
+npm install -g @mermaid-js/mermaid-cli   # mermaid skill
+npm install -g defuddle                    # defuddle skill
+pip3 install cryptography                  # secret-vault skill
+```
+
+### 2. Link Skills
+
+Skills are auto-discovered by the setup script, but you can link them manually:
+
+**macOS / Linux (symlinks):**
+```bash
+mkdir -p ~/.claude/skills
+# Link individual skills
 ln -sf "$(pwd)/mermaid" ~/.claude/skills/mermaid
-ln -sf "$(pwd)/lucidchart" ~/.claude/skills/lucidchart
+ln -sf "$(pwd)/secret-vault" ~/.claude/skills/secret-vault
+# ... or link all skills at once
+for d in */SKILL.md; do
+    skill="$(dirname "$d")"
+    ln -sf "$(pwd)/$skill" ~/.claude/skills/$skill
+done
 ```
 
-### Option B: Per-project skills
+**Windows (directory junctions):**
+```powershell
+New-Item -ItemType Directory -Path "$env:USERPROFILE\.claude\skills" -Force
+# Link individual skills
+cmd /c mklink /J "$env:USERPROFILE\.claude\skills\mermaid" "$PWD\mermaid"
+# ... or link all skills at once
+Get-ChildItem -Directory | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | ForEach-Object {
+    cmd /c mklink /J "$env:USERPROFILE\.claude\skills\$($_.Name)" $_.FullName
+}
+```
+
+### 3. Per-project Skills (optional)
+
+Instead of global install, link into a specific project:
 
 ```bash
-# From your project root
 mkdir -p .claude/skills
 ln -sf /path/to/claude-skills/mermaid .claude/skills/mermaid
-ln -sf /path/to/claude-skills/lucidchart .claude/skills/lucidchart
 ```
 
-### OpenClaw
+## Platform Notes
 
-For OpenClaw, symlink into your workspace `skills/` directory:
+**macOS** — No extra setup. Puppeteer downloads Chromium automatically.
 
+**Linux x86_64** — Same as Mac. On headless servers you may need display libs:
 ```bash
-# From your OpenClaw workspace (e.g., ~/repos/swabby-brain)
-ln -sf /path/to/claude-skills/mermaid skills/mermaid
-ln -sf /path/to/claude-skills/lucidchart skills/lucidchart
+sudo apt install -y libnss3 libatk-bridge2.0-0 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libasound2
 ```
 
-## 4. Verify
-
-### Mermaid
-
-Create a test diagram:
+**Linux ARM64** — Puppeteer doesn't bundle ARM64 Chromium. Install system Chromium:
 ```bash
-cat > /tmp/test.mmd << 'EOF'
-graph TD
-    A[Hello] --> B[World]
-EOF
-
-# Use the render script
-bash mermaid/scripts/render.sh /tmp/test.mmd /tmp/test.png
-
-# Check output
-file /tmp/test.png
-# Should show: PNG image data, ...
+sudo apt install -y chromium-browser
 ```
+The mermaid render script auto-detects ARM64 and uses `mermaid/puppeteer-config.json`.
 
-In Claude Code:
-```
-> /mermaid
-> draw a flowchart showing a CI/CD pipeline
-```
-
-### Claude Code auto-discovery
-
-After symlinking, restart Claude Code. Skills appear when you type `/` and are also triggered automatically when relevant (e.g., "draw a diagram" will activate the mermaid skill).
-
-## 5. Lucidchart API Key
-
-> Not yet required — the Lucidchart skill is in planning.
-
-When ready:
-
-1. Go to [lucidchart.com](https://lucidchart.com) → Account Settings → API Tokens
-2. Create a new API key with grants: `lucidchart`, `user.profile`
-3. Store the key securely:
-   - **Claude Code:** Set `LUCID_API_KEY` environment variable
-   - **OpenClaw:** Encrypt with vault and reference from skill scripts
+**Windows** — Puppeteer downloads Chromium automatically. No extra setup needed.
 
 ## Updating
 
@@ -136,15 +109,16 @@ cd claude-skills
 git pull
 ```
 
-Skills are symlinked, so updates are instant — no reinstall needed.
+Skills are symlinked/junctioned, so updates are instant — no reinstall needed.
 
 ## Troubleshooting
 
 | Issue | Platform | Fix |
 |---|---|---|
-| `Failed to launch browser` | Mac/Linux x86 | Run `npx puppeteer browsers install chrome` |
-| `Failed to launch browser` | Linux ARM64 | Install system Chromium: `sudo apt install chromium-browser` |
-| `mmdc: command not found` | All | Run `npm install -g @mermaid-js/mermaid-cli` |
-| Diagram renders blank | All | Check Mermaid syntax at [mermaid.live](https://mermaid.live) |
-| Wrong Chromium path (ARM64) | Linux ARM64 | Edit `mermaid/puppeteer-config.json` → `executablePath` |
-| `Syntax error: ")" unexpected` | Linux ARM64 | Puppeteer downloaded x86 binary — ensure puppeteer-config.json is used |
+| `Failed to launch browser` | Mac/Linux x86 | `npx puppeteer browsers install chrome` |
+| `Failed to launch browser` | Linux ARM64 | `sudo apt install chromium-browser` |
+| `mmdc: command not found` | All | `npm install -g @mermaid-js/mermaid-cli` |
+| Diagram renders blank | All | Check syntax at [mermaid.live](https://mermaid.live) |
+| `Execution policy` error | Windows | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| Junction not created | Windows | Run PowerShell as Administrator |
+| `import cryptography` fails | All | `pip3 install cryptography` |

@@ -9,13 +9,17 @@ Generate diagrams as real images (PNG/SVG) instead of ASCII art.
 
 ## Rendering
 
-Use the render script for cross-platform compatibility:
-
+**macOS / Linux:**
 ```bash
 bash scripts/render.sh diagram.mmd diagram.png [theme] [width]
 ```
 
-Resolve `scripts/render.sh` relative to this skill's directory.
+**Windows (PowerShell):**
+```powershell
+pwsh scripts/render.ps1 diagram.mmd diagram.png [theme] [width]
+```
+
+Resolve the script path relative to this skill's directory.
 
 Examples:
 ```bash
@@ -29,7 +33,7 @@ bash scripts/render.sh diagram.mmd diagram.png default 1600
 bash scripts/render.sh diagram.mmd diagram.svg dark
 ```
 
-The script auto-detects the platform and uses system Chromium on Linux ARM64 (Pi) or Puppeteer's bundled Chromium on Mac/x86.
+The bash script auto-detects the platform and uses system Chromium on Linux ARM64 (Pi) or Puppeteer's bundled Chromium on Mac/x86/Windows.
 
 ## Workflow
 

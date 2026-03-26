@@ -55,4 +55,7 @@ After onboarding, the user has:
 
 ## Scripts
 
-- `scripts/verify-credentials.sh` — Tests all three clouds in sequence
+- **macOS / Linux**: `bash scripts/verify-credentials.sh`
+- **Windows**: `pwsh scripts/verify-credentials.ps1`
+
+Both scripts test all three clouds in sequence.

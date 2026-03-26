@@ -87,7 +87,23 @@ Read `schemas/project-defaults.yaml` for default project settings.
 
 - `scripts/gitlab.py` — Main CLI. Run `python3 scripts/gitlab.py --help`
 
-## Key Difference from GitHub
+## How This Differs from Native `glab` CLI
+
+Claude Code can use the `glab` CLI natively for GitLab operations. This skill is an alternative that:
+
+| | This skill | Native `glab` CLI |
+|---|---|---|
+| **Install required** | Python 3 only | `glab` CLI (`brew install glab`) |
+| **Auth method** | PAT in secret-vault or `GITLAB_TOKEN` env var | `glab auth login` (OAuth or PAT) |
+| **Auth storage** | Encrypted vault (`~/.claude/vault/vault.enc`) | `~/.config/glab-cli/config.yml` (plaintext) |
+| **Self-hosted** | Set `gitlab.host` in vault — all API calls route automatically | `glab auth login --hostname` |
+| **CI/CD templates** | Built-in `.gitlab-ci.yml` templates for Python, Node, Terraform, Docker | None — you write them yourself |
+| **Project defaults** | Applies settings from `schemas/project-defaults.yaml` | Manual setup |
+| **Offline-friendly** | Direct REST API calls, no CLI dependency | Requires `glab` binary |
+
+Use this skill when `glab` isn't available, when you want encrypted token storage, or when you want opinionated project setup with pipeline templates baked in.
+
+## GitLab API Notes
 
 GitLab uses `PRIVATE-TOKEN` header (not `Authorization: Bearer`). The script handles
 this transparently. Self-hosted instances just need `gitlab.host` set — all API calls

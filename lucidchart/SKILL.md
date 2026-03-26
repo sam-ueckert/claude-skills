@@ -16,12 +16,32 @@ Set the environment variable `LUCID_API_KEY` with your Lucidchart API key (creat
 
 ## Scripts
 
-All scripts are in this skill's `scripts/` directory. They require `curl` and `jq`.
+All scripts are in this skill's `scripts/` directory.
+
+- **macOS / Linux**: `bash scripts/lucidchart.sh <command>` (requires `curl` and `jq`)
+- **Windows**: `pwsh scripts/lucidchart.ps1 <command>` (uses `Invoke-RestMethod`)
+
+### Python helper
+
+We also provide a small Python CLI for environments that prefer a scriptable API client:
+
+```bash
+python3 scripts/create_diagram.py --title "My Diagram"
+python3 scripts/create_diagram.py --title "From Template" --template-id TEMPLATE_ID
+```
+
+The Python script reads `LUCID_API_KEY` from the environment (or `LUCID_API_BASE` to override host). Install dependencies with:
+
+```bash
+python3 -m pip install --user requests python-dotenv
+```
+
 
 ### Create a document
 
 ```bash
 bash scripts/lucidchart.sh create "Diagram Title" [folder_id]
+pwsh scripts/lucidchart.ps1 create "Diagram Title" [folder_id]   # Windows
 ```
 
 Returns the document ID and edit URL.

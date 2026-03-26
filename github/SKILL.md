@@ -87,6 +87,21 @@ Read `schemas/repo-defaults.yaml` for default repository settings:
 
 - `scripts/github.py` — Main CLI. Run `python3 scripts/github.py --help`
 
+## How This Differs from Native `gh` CLI
+
+Claude Code can use the `gh` CLI natively for GitHub operations. This skill is an alternative that:
+
+| | This skill | Native `gh` CLI |
+|---|---|---|
+| **Install required** | Python 3 only | `gh` CLI (`brew install gh`) |
+| **Auth method** | PAT in secret-vault or `GITHUB_TOKEN` env var | `gh auth login` (OAuth or PAT) |
+| **Auth storage** | Encrypted vault (`~/.claude/vault/vault.enc`) | `~/.config/gh/hosts.yml` (plaintext) |
+| **CI/CD templates** | Built-in workflow templates for Python, Node, Terraform, Docker | None — you write them yourself |
+| **Repo defaults** | Applies branch protection, labels, and settings from `schemas/repo-defaults.yaml` | Manual setup |
+| **Offline-friendly** | Direct REST API calls, no CLI dependency | Requires `gh` binary |
+
+Use this skill when `gh` isn't available, when you want encrypted token storage, or when you want opinionated repo setup with CI/CD templates baked in.
+
 ## Integration
 
 - **secret-vault**: Reads `github.pat` for authentication

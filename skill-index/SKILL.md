@@ -29,12 +29,16 @@ python3 secret-vault/scripts/vault.py set github.token <your-token>
 
 ## Scripts
 
-All scripts are in this skill's `scripts/` directory. They require `curl` and `jq`.
+All scripts are in this skill's `scripts/` directory.
+
+- **macOS / Linux**: `bash scripts/skill-index.sh <command>` (requires `curl` and `jq`)
+- **Windows**: `pwsh scripts/skill-index.ps1 <command>` (uses `Invoke-RestMethod`)
 
 ### List all skills
 
 ```bash
 bash scripts/skill-index.sh list
+pwsh scripts/skill-index.ps1 list   # Windows
 ```
 
 Displays all skills with their name and description.
