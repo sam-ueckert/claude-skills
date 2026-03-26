@@ -82,6 +82,17 @@ python3 scripts/vault.py rotate <key> <new_value>
 ```
 Logs the rotation event with timestamp. Old value is overwritten, not archived.
 
+### Import secrets from a file
+```bash
+python3 scripts/vault.py import secrets.env [--tags service:aws] [--keep]
+```
+Accepts `.env` (KEY=VALUE) or JSON (`{"key": "value"}`) format.
+The file is **securely deleted** after import (overwritten with random data, then removed).
+Use `--keep` to preserve the file.
+
+This is the safe way to add secrets without sending them through Claude — write them to a
+file yourself, then ask Claude to run the import.
+
 ### Delete a secret
 ```bash
 python3 scripts/vault.py delete <key>
@@ -109,6 +120,62 @@ python3 scripts/vault.py export --format env
   }
 }
 ```
+
+## Adding Secrets Without Exposing Them to Claude
+
+Anything typed in the Claude chat or passed as a command argument through Claude is sent to
+Anthropic's API. To add secrets safely, use the **file import** workflow — Claude only sees
+the filename, never the file contents.
+
+### Step-by-step
+
+1. **Create a secrets file in your editor or terminal** (not through Claude):
+
+   `.env` format:
+   ```
+   # secrets.env
+   github.token=ghp_xxxxxxxxxxxx
+   aws.access_key_id=AKIA...
+   aws.secret_access_key=wJalr...
+   ```
+
+   Or JSON format:
+   ```json
+   {
+     "github.token": "ghp_xxxxxxxxxxxx",
+     "aws.access_key_id": "AKIA...",
+     "aws.secret_access_key": "wJalr..."
+   }
+   ```
+
+2. **Ask Claude to import the file:**
+
+   > "import secrets from secrets.env into the vault"
+
+   Claude runs:
+   ```bash
+   python3 scripts/vault.py import secrets.env
+   ```
+
+3. **The file is automatically shredded** — overwritten with random bytes, then deleted.
+   Use `--keep` if you want to preserve it.
+
+### What stays private
+
+| Step | Who sees it | Sent to Anthropic? |
+|------|------------|-------------------|
+| You write `secrets.env` | You only | No |
+| Claude runs `vault.py import secrets.env` | Claude sees the filename | Filename only |
+| `vault.py` reads and encrypts the file | Local Python process | No |
+| File is overwritten + deleted | Nobody | No |
+| Secrets stored in `vault.enc` | Encrypted on disk | No |
+| `vault.py get <key>` at runtime | Local process / stdout | No (unless piped into chat) |
+
+### Other safe alternatives
+
+- **Run `vault.py set` yourself** in a separate terminal — not through Claude
+- **Use `vault.py init --keychain`** and the OS keychain for the master key
+- **Never ask Claude to read or cat a secrets file** — that sends the contents to the API
 
 ## Security Considerations
 

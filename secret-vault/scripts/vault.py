@@ -318,6 +318,78 @@ def cmd_delete(args):
     print(f"Deleted: {args.key}")
 
 
+def cmd_import(args):
+    """Import secrets from a file. Supports KEY=VALUE (.env) and JSON formats.
+    The file is securely deleted after import."""
+    filepath = Path(args.file)
+    if not filepath.exists():
+        print(f"File not found: {filepath}", file=sys.stderr)
+        sys.exit(1)
+
+    key = resolve_key()
+    vault = load_vault(key)
+    now = datetime.now(timezone.utc).isoformat()
+    tags = args.tags.split(",") if args.tags else []
+    count = 0
+
+    content = filepath.read_text().strip()
+
+    # Detect JSON format
+    if content.startswith("{"):
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as e:
+            print(f"Invalid JSON: {e}", file=sys.stderr)
+            sys.exit(1)
+        for k, v in data.items():
+            vault["secrets"][k] = {
+                "value": str(v),
+                "tags": tags,
+                "created": now,
+                "rotated": None,
+            }
+            count += 1
+    else:
+        # KEY=VALUE format (one per line, # comments, blank lines skipped)
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            # Strip optional 'export ' prefix
+            if line.startswith("export "):
+                line = line[7:]
+            if "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            k = k.strip()
+            # Remove surrounding quotes from value
+            v = v.strip().strip("'\"")
+            vault["secrets"][k] = {
+                "value": v,
+                "tags": tags,
+                "created": now,
+                "rotated": None,
+            }
+            count += 1
+
+    save_vault(vault, key)
+    audit("import", f"{count} keys from {filepath.name}")
+
+    # Securely delete the file
+    if not args.keep:
+        try:
+            # Overwrite with random data before unlinking
+            size = filepath.stat().st_size
+            filepath.write_bytes(os.urandom(max(size, 64)))
+            filepath.unlink()
+            print(f"Imported {count} secret(s). File securely deleted.")
+        except OSError:
+            filepath.unlink(missing_ok=True)
+            print(f"Imported {count} secret(s). File deleted.")
+    else:
+        print(f"Imported {count} secret(s). File kept (--keep).")
+
+
 def cmd_export(args):
     key = resolve_key()
     vault = load_vault(key)
@@ -368,6 +440,11 @@ def main():
     p_del = sub.add_parser("delete", help="Delete a secret")
     p_del.add_argument("key")
 
+    p_imp = sub.add_parser("import", help="Import secrets from a file (deleted after import)")
+    p_imp.add_argument("file", help="Path to .env or JSON file")
+    p_imp.add_argument("--tags", help="Comma-separated tags to apply to all imported secrets")
+    p_imp.add_argument("--keep", action="store_true", help="Keep the file after import (default: securely delete)")
+
     p_exp = sub.add_parser("export", help="Export secrets for CI/CD")
     p_exp.add_argument("--format", choices=["env", "github-actions", "gitlab-ci"], default="env")
 
@@ -377,7 +454,8 @@ def main():
         sys.exit(1)
 
     {"init": cmd_init, "set": cmd_set, "get": cmd_get, "list": cmd_list,
-     "rotate": cmd_rotate, "delete": cmd_delete, "export": cmd_export}[args.command](args)
+     "rotate": cmd_rotate, "delete": cmd_delete, "import": cmd_import,
+     "export": cmd_export}[args.command](args)
 
 
 if __name__ == "__main__":
