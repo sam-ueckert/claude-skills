@@ -1,95 +1,118 @@
-# Claude Skills — Automation Engineer Toolkit
+# Agent Skills — Automation Engineer Toolkit
 
-Custom Claude skills for infrastructure automation, cloud provisioning, and DevOps workflows.
+Reusable AI agent skills for infrastructure automation, cloud provisioning, DevOps workflows, and diagram rendering. Compatible with any AgentSkills-compatible agent (OpenClaw, Claude Code, etc.).
 
-## Skills Index
+## Skills
 
-| Skill | Description | Dependencies |
-|-------|-------------|--------------|
-| [secret-vault](secret-vault/) | Encrypted API key/credential storage (AES-256-GCM) | `cryptography` |
-| [playbook-generator](playbook-generator/) | Standards-conformant playbook/runbook/SOP generation | — |
-| [cloud-provisioning](cloud-provisioning/) | AWS/Azure/GCP credential onboarding with least-privilege IAM | Cloud CLIs |
-| [env-scaffolder](env-scaffolder/) | Project scaffolding by type (Python, Node, Terraform, Docker) | — |
-| [github](github/) | GitHub repo creation, push, Actions secrets, CI/CD | `pynacl` |
-| [gitlab](gitlab/) | GitLab project creation, push, CI variables, self-hosted | — |
+| Skill | Status | Description |
+|-------|--------|-------------|
+| `/mermaid` | ✅ Ready | Render diagrams (flowcharts, mind maps, ERDs, sequence, Gantt, etc.) to PNG/SVG |
+| `/lucidchart` | ✅ Ready | Manage Lucidchart documents via REST API — create, search, export as PNG, share |
+| `/auth-switch` | ✅ Ready | Switch between Anthropic auth profiles in OpenClaw |
+| `/secret-vault` | ✅ Ready | Encrypted local credential storage with AES-256-GCM, tiered key management |
+| `/github` | ✅ Ready | Create repos, push code, manage Actions secrets, configure CI/CD on GitHub |
+| `/gitlab` | ✅ Ready | Create projects, push code, manage CI/CD variables on GitLab.com or self-hosted |
+| `/cloud-provisioning` | ✅ Ready | Onboard and provision compute credentials for AWS, Azure, and GCP |
+| `/env-scaffolder` | ✅ Ready | Scaffold project environments with directory structure, configs, and CI/CD templates |
+| `/playbook-generator` | ✅ Ready | Generate operational playbooks and SOPs conforming to organizational standards |
+| `/skill-index` | ✅ Ready | Browse and search the curated index of available skills from this repo |
+| `/clip-img` | ✅ Ready | Paste clipboard images into a terminal-based AI agent via Raycast (macOS only) |
 
-## How Skills Connect
+## Setup
 
-```
-cloud-provisioning ──► secret-vault ◄── github
-                           │         ◄── gitlab
-                           ▼
-                    env-scaffolder ──► github/gitlab (CI templates)
-                           │
-                           ▼
-                   playbook-generator (rotation playbooks)
-```
-
-- **secret-vault** is the hub — other skills store and retrieve credentials through it
-- **cloud-provisioning** onboards cloud credentials, stores them in the vault
-- **github/gitlab** read PATs from the vault, push code, manage CI/CD
-- **env-scaffolder** generates project boilerplate referencing vault key names
-- **playbook-generator** creates operational docs conforming to org standards
-
-## Quick Start
+See [SETUP.md](SETUP.md) for full installation instructions.
 
 ```bash
-# 1. Initialize the vault
-pip install cryptography
-python3 secret-vault/scripts/vault.py init --passphrase
+# 1. Clone this repo
+git clone https://github.com/sam-ueckert/claude-skills.git
+cd claude-skills
 
-# 2. Onboard to a cloud (ask Claude)
-#    > "Set up my AWS credentials"
-
-# 3. Store your GitHub PAT
-python3 secret-vault/scripts/vault.py set github.pat ghp_yourtoken
-
-# 4. Scaffold a project and push it
-#    > "Create a FastAPI project called my-api and push it to GitHub"
+# 2. Run the setup script (installs dependencies, links skills)
+bash setup.sh          # macOS / Linux
+pwsh setup.ps1         # Windows
 ```
 
-## Design Principles
+## Available Tools
 
-1. **Composable** — skills work standalone and integrate naturally
-2. **Least privilege** — never request more access than needed
-3. **Offline-first** — core functionality works without internet
-4. **Standards-based** — JSON Schema, YAML, OpenAPI over custom formats
-5. **Audit trail** — sensitive actions get logged
+These skills provide the following tools:
 
-## Repository Structure
+**Mermaid:**
+- `scripts/render.sh` / `scripts/render.ps1` — cross-platform Mermaid rendering
+
+**Secret Vault:**
+- `scripts/vault.py` — encrypted credential storage CLI
+
+**GitHub / GitLab:**
+- `scripts/github.py` / `scripts/gitlab.py` — API clients for repo management
+
+**Cloud Provisioning:**
+- `scripts/verify-credentials.sh` / `scripts/verify-credentials.ps1` — test cloud credentials
+
+**Lucidchart:**
+- `scripts/lucidchart.sh` / `scripts/lucidchart.ps1` / `scripts/create_diagram.py` — Lucidchart API client
+
+**Auth Switch:**
+- `scripts/auth-switch.sh` — OpenClaw auth profile management
+
+**Skill Index:**
+- `scripts/skill-index.sh` / `scripts/skill-index.ps1` — browse/search skill registry
+
+## Usage Examples
+
+### Render a diagram
+```
+/mermaid flowchart showing CI/CD pipeline
+```
+
+### Provision cloud credentials
+```
+/cloud-provisioning Set up AWS credentials
+```
+
+### Create a GitHub repo with CI/CD
+```
+/github create-repo --name my-project --private
+```
+
+### Generate an operational playbook
+```
+/playbook-generator deployment runbook for Azure AI Foundry
+```
+
+## Project Structure
 
 ```
 claude-skills/
-├── README.md                   ← this file
-├── BRAINSTORM.md               ← future skill ideas
-├── secret-vault/
-│   ├── SKILL.md
-│   ├── README.md
-│   ├── schemas/vault-schema.json
-│   └── scripts/vault.py
-├── playbook-generator/
-│   ├── SKILL.md
-│   ├── README.md
-│   ├── schemas/baseline-standard.yaml
-│   ├── schemas/org-standard-template.yaml
-│   └── examples/azure-foundry-deployment.md
-├── cloud-provisioning/
-│   ├── SKILL.md
-│   ├── README.md
-│   ├── schemas/{aws,azure,gcp} policies
-│   └── scripts/verify-credentials.sh
-├── env-scaffolder/
-│   ├── SKILL.md
-│   ├── README.md
-│   └── schemas/project-types.yaml
-├── github/
-│   ├── SKILL.md
-│   ├── README.md
-│   ├── schemas/{workflow-templates,repo-defaults}.yaml
-│   └── scripts/github.py
-└── gitlab/
-    ├── SKILL.md
-    ├── README.md
-    ├── schemas/{pipeline-templates,project-defaults}.yaml
-    └── scripts/gitlab.py
+├── skills/
+│   ├── mermaid/           # Diagram rendering
+│   ├── lucidchart/        # Lucidchart API integration
+│   ├── auth-switch/       # Auth profile switching
+│   ├── secret-vault/      # Credential encryption
+│   ├── github/            # GitHub API operations
+│   ├── gitlab/            # GitLab API operations
+│   ├── cloud-provisioning/# Cloud IAM onboarding
+│   ├── env-scaffolder/    # Project scaffolding
+│   ├── playbook-generator/# Operational playbooks
+│   ├── skill-index/       # Skill browser
+│   └── clip-img/          # Clipboard image paste (macOS)
+├── setup.sh               # macOS/Linux setup
+├── setup.ps1              # Windows setup
+├── setup-mac.sh           # macOS-specific setup
+├── SETUP.md               # Detailed setup guide
+├── BRAINSTORM.md          # Future skill ideas
+└── README.md
 ```
+
+## Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| macOS (Apple Silicon) | ✅ | Full support |
+| macOS (Intel) | ✅ | Full support |
+| Linux x86_64 | ✅ | Full support |
+| Linux ARM64 (Pi) | ✅ | Mermaid uses system `chromium-browser` |
+| Windows | ✅ | PowerShell scripts provided |
+
+## License
+
+MIT

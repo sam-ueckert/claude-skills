@@ -3,7 +3,7 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/<your-fork>/claude-skills.git
+git clone https://github.com/sam-ueckert/claude-skills.git
 cd claude-skills
 ```
 
@@ -21,9 +21,9 @@ powershell -ExecutionPolicy Bypass -File setup.ps1
 
 The setup script will:
 1. Check prerequisites (Node.js, npm, git, python3)
-2. Install npm dependencies (mermaid-cli, defuddle)
+2. Install npm dependencies (mermaid-cli)
 3. Install Python dependencies (cryptography for secret-vault)
-4. Auto-discover all skills (any directory with a `SKILL.md`) and symlink them into `~/.claude/skills/`
+4. Auto-discover all skills (any directory under `skills/` with a `SKILL.md`)
 5. Verify mermaid rendering works
 
 ## Prerequisites
@@ -31,9 +31,9 @@ The setup script will:
 | Dependency | Required by | Install |
 |---|---|---|
 | Node.js v18+ | mermaid | `brew install node` / `winget install OpenJS.NodeJS.LTS` |
-| npm | mermaid, defuddle | comes with Node.js |
+| npm | mermaid | comes with Node.js |
 | git | setup script | `xcode-select --install` / `winget install Git.Git` |
-| Python 3 | secret-vault | `brew install python` / `winget install Python.Python.3.12` |
+| Python 3 | secret-vault, github, gitlab | `brew install python` / `winget install Python.Python.3.12` |
 | curl + jq | lucidchart, skill-index | pre-installed on macOS; `sudo apt install curl jq` on Linux |
 
 ## Manual Setup
@@ -44,46 +44,48 @@ If you prefer not to use the setup script:
 
 ```bash
 npm install -g @mermaid-js/mermaid-cli   # mermaid skill
-npm install -g defuddle                    # defuddle skill
 pip3 install cryptography                  # secret-vault skill
 ```
 
-### 2. Link Skills
+### 2. Link Skills into Your Agent
 
-Skills are auto-discovered by the setup script, but you can link them manually:
+Link skill directories into your AI agent's workspace `skills/` directory:
 
 **macOS / Linux (symlinks):**
 ```bash
-mkdir -p ~/.claude/skills
+# From your agent workspace
+mkdir -p skills
+
 # Link individual skills
-ln -sf "$(pwd)/mermaid" ~/.claude/skills/mermaid
-ln -sf "$(pwd)/secret-vault" ~/.claude/skills/secret-vault
+ln -sf /path/to/claude-skills/skills/mermaid skills/mermaid
+ln -sf /path/to/claude-skills/skills/secret-vault skills/secret-vault
+
 # ... or link all skills at once
-for d in */SKILL.md; do
-    skill="$(dirname "$d")"
-    ln -sf "$(pwd)/$skill" ~/.claude/skills/$skill
+for d in /path/to/claude-skills/skills/*/SKILL.md; do
+    skill="$(basename "$(dirname "$d")")"
+    ln -sf "$(dirname "$d")" "skills/$skill"
 done
 ```
 
 **Windows (directory junctions):**
 ```powershell
-New-Item -ItemType Directory -Path "$env:USERPROFILE\.claude\skills" -Force
-# Link individual skills
-cmd /c mklink /J "$env:USERPROFILE\.claude\skills\mermaid" "$PWD\mermaid"
-# ... or link all skills at once
-Get-ChildItem -Directory | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | ForEach-Object {
-    cmd /c mklink /J "$env:USERPROFILE\.claude\skills\$($_.Name)" $_.FullName
+New-Item -ItemType Directory -Path "skills" -Force
+Get-ChildItem -Path "C:\path\to\claude-skills\skills" -Directory | Where-Object {
+    Test-Path "$($_.FullName)\SKILL.md"
+} | ForEach-Object {
+    cmd /c mklink /J "skills\$($_.Name)" $_.FullName
 }
 ```
 
-### 3. Per-project Skills (optional)
+### OpenClaw
 
-Instead of global install, link into a specific project:
-
+For OpenClaw, symlink into your workspace's `skills/` directory:
 ```bash
-mkdir -p .claude/skills
-ln -sf /path/to/claude-skills/mermaid .claude/skills/mermaid
+cd ~/repos/your-workspace
+ln -sf /path/to/claude-skills/skills/mermaid skills/mermaid
 ```
+
+Skills are auto-discovered when the agent starts.
 
 ## Platform Notes
 
@@ -98,7 +100,7 @@ sudo apt install -y libnss3 libatk-bridge2.0-0 libx11-xcb1 libxcomposite1 libxda
 ```bash
 sudo apt install -y chromium-browser
 ```
-The mermaid render script auto-detects ARM64 and uses `mermaid/puppeteer-config.json`.
+The mermaid render script auto-detects ARM64 and uses `skills/mermaid/puppeteer-config.json`.
 
 **Windows** — Puppeteer downloads Chromium automatically. No extra setup needed.
 

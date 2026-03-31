@@ -1,4 +1,4 @@
-# Setup script for Claude Code skills on Windows
+# Setup script for AI agent skills on Windows
 # Usage: powershell -ExecutionPolicy Bypass -File setup.ps1
 #
 # Run from within the cloned repo.
@@ -8,18 +8,18 @@ $ErrorActionPreference = "Stop"
 # Resolve repo root
 $RepoDir = if ($env:SKILLS_DIR) { $env:SKILLS_DIR } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not (Test-Path "$RepoDir\setup.ps1")) {
-    Write-Host "Run this script from within the claude-skills repo, or set SKILLS_DIR." -ForegroundColor Red
+    Write-Host "Run this script from within the agent-skills repo, or set SKILLS_DIR." -ForegroundColor Red
     exit 1
 }
 
-$ClaudeSkills = "$env:USERPROFILE\.claude\skills"
+$AgentSkills = if ($env:AGENT_SKILLS_DIR) { $env:AGENT_SKILLS_DIR } else { "$env:USERPROFILE\.claude\skills" }
 
 function Write-Ok($msg)   { Write-Host "  [OK] $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "  [!!] $msg" -ForegroundColor Yellow }
 function Write-Fail($msg) { Write-Host "  [XX] $msg" -ForegroundColor Red }
 
 Write-Host ""
-Write-Host "  Claude Code Skills - Windows Setup" -ForegroundColor Cyan
+Write-Host "  Agent Skills - Windows Setup" -ForegroundColor Cyan
 Write-Host ("=" * 44)
 Write-Host ""
 
@@ -90,21 +90,24 @@ try {
 
 Write-Host ""
 
-# -- Link skills into Claude Code --
-# Auto-discover skills: any directory containing a SKILL.md
+# -- Link skills into agent workspace --
+# Auto-discover skills: any directory under skills/ containing a SKILL.md
 # Uses directory junctions (no admin required)
-Write-Host "Linking skills into Claude Code (~\.claude\skills\)..."
-New-Item -ItemType Directory -Path $ClaudeSkills -Force | Out-Null
+Write-Host "Linking skills into agent workspace ($AgentSkills)..."
+New-Item -ItemType Directory -Path $AgentSkills -Force | Out-Null
 
-Get-ChildItem -Path $RepoDir -Directory | ForEach-Object {
-    $skillDir = $_.FullName
-    $skillMd = Join-Path $skillDir "SKILL.md"
-    if (Test-Path $skillMd) {
-        $skill = $_.Name
-        $target = Join-Path $ClaudeSkills $skill
-        if (Test-Path $target) { Remove-Item $target -Recurse -Force }
-        cmd /c mklink /J "$target" "$skillDir" | Out-Null
-        Write-Ok $skill
+$skillsDir = Join-Path $RepoDir "skills"
+if (Test-Path $skillsDir) {
+    Get-ChildItem -Path $skillsDir -Directory | ForEach-Object {
+        $skillDir = $_.FullName
+        $skillMd = Join-Path $skillDir "SKILL.md"
+        if (Test-Path $skillMd) {
+            $skill = $_.Name
+            $target = Join-Path $AgentSkills $skill
+            if (Test-Path $target) { Remove-Item $target -Recurse -Force }
+            cmd /c mklink /J "$target" "$skillDir" | Out-Null
+            Write-Ok $skill
+        }
     }
 }
 
@@ -130,7 +133,7 @@ Write-Host ""
 Write-Host ("=" * 44)
 Write-Host "  Installed Skills" -ForegroundColor Cyan
 Write-Host ("=" * 44)
-Get-ChildItem $ClaudeSkills -Directory | ForEach-Object {
+Get-ChildItem $AgentSkills -Directory | ForEach-Object {
     $name = $_.Name
     $target = if ($_.LinkTarget) { $_.LinkTarget } else { "local" }
     $target = $target -replace [regex]::Escape($env:USERPROFILE), '~'
@@ -139,6 +142,6 @@ Get-ChildItem $ClaudeSkills -Directory | ForEach-Object {
 
 Write-Host ""
 Write-Host ("=" * 44)
-Write-Host "  Done! Restart Claude Code to pick up skills." -ForegroundColor Green
+Write-Host "  Done! Restart your AI agent to pick up skills." -ForegroundColor Green
 Write-Host "  Type / to see available skills."
 Write-Host ("=" * 44)

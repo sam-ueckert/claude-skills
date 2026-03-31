@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Setup script for Claude Code skills on macOS and Linux
+# Setup script for AI agent skills on macOS and Linux
 # Usage: bash setup.sh
 #
 # Run from within the cloned repo, or set SKILLS_DIR to the repo path.
@@ -11,11 +11,11 @@ if [[ -n "${SKILLS_DIR:-}" ]]; then
 elif [[ -f "$(dirname "$0")/setup.sh" ]]; then
     REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 else
-    echo "Run this script from within the claude-skills repo, or set SKILLS_DIR." >&2
+    echo "Run this script from within the agent-skills repo, or set SKILLS_DIR." >&2
     exit 1
 fi
 
-CLAUDE_SKILLS="$HOME/.claude/skills"
+AGENT_SKILLS="${AGENT_SKILLS_DIR:-$HOME/.claude/skills}"
 OS="$(uname -s)"
 
 GREEN='\033[0;32m'
@@ -43,7 +43,7 @@ ask_yes_no() {
 }
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Claude Code Skills — Setup ($OS)"
+echo "  Agent Skills — Setup ($OS)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -248,16 +248,16 @@ fi
 
 echo ""
 
-# ── Symlink skills into Claude Code ───────────
-echo "Linking skills into Claude Code (~/.claude/skills/)..."
-mkdir -p "$CLAUDE_SKILLS"
+# ── Symlink skills into agent workspace ───────────
+echo "Linking skills into agent workspace ($AGENT_SKILLS/)..."
+mkdir -p "$AGENT_SKILLS"
 
-# Auto-discover skills: any directory containing a SKILL.md
-for skill_md in "$REPO_DIR"/*/SKILL.md; do
+# Auto-discover skills: any directory under skills/ containing a SKILL.md
+for skill_md in "$REPO_DIR"/skills/*/SKILL.md; do
     skill_dir="$(dirname "$skill_md")"
     skill="$(basename "$skill_dir")"
-    rm -rf "$CLAUDE_SKILLS/$skill" 2>/dev/null
-    ln -sf "$skill_dir" "$CLAUDE_SKILLS/$skill"
+    rm -rf "$AGENT_SKILLS/$skill" 2>/dev/null
+    ln -sf "$skill_dir" "$AGENT_SKILLS/$skill"
     ok "$skill"
 done
 
@@ -286,7 +286,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Installed Skills"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-for d in "$CLAUDE_SKILLS"/*/; do
+for d in "$AGENT_SKILLS"/*/; do
     [ -d "$d" ] || continue
     skill=$(basename "$d")
     target=$(readlink "$d" 2>/dev/null || echo "local")
@@ -295,6 +295,6 @@ done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "  ${GREEN}Done!${NC} Restart Claude Code to pick up skills."
+echo -e "  ${GREEN}Done!${NC} Restart your AI agent to pick up skills."
 echo "  Type / to see available skills."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
