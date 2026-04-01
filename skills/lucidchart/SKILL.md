@@ -96,6 +96,12 @@ bash scripts/lucidchart.sh folders
    - Markdown: `![description](path/to/diagram.png)`
    - Obsidian: `![[diagram.png]]`
 
+## Gotchas
+
+- The API can create and export documents but CANNOT add shapes/content programmatically — design must happen in the Lucidchart editor
+- Export rate limit is 75 requests per 5 seconds — batch exports can hit this quickly
+- API keys don't support sharing — use the Lucidchart UI for that (requires OAuth 2.0)
+
 ## Notes
 
 - The API creates blank documents or copies templates — there is no programmatic way to add shapes/content via REST API. Users design in the Lucidchart editor.

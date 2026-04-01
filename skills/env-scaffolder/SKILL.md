@@ -63,6 +63,11 @@ my-project/
 └── README.md
 ```
 
+## Gotchas
+
+- `${vault:key.name}` in .env.example is a reminder notation, not actual interpolation — users must manually pull from vault
+- The `agent-skill` project type is meta (scaffolds a skill) — don't confuse with the skill-creator skill
+
 ## Integration
 
 - `.env.example` uses `${vault:key.name}` notation — a reminder to pull from secret-vault

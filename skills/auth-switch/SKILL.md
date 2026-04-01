@@ -43,6 +43,12 @@ The switch updates `auth-profiles.json` locally. To take effect:
 - Resets error count and failure timestamp on the target
 - Sets `lastUsed` to 0 so OpenClaw's rotation picks it as the preferred (oldest-used) profile
 
+## Gotchas
+
+- Switching profiles updates auth-profiles.json but requires a gateway restart to take effect
+- If the target profile's OAuth token is expired, the switch succeeds but API calls will fail after restart
+- The script sets `lastUsed: 0` which makes the profile "oldest" for rotation — this is intentional, not a bug
+
 ## Notes
 
 - OpenClaw auto-rotates between profiles on rate limit errors

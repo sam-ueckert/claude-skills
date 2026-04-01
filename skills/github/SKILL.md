@@ -20,33 +20,15 @@ args:
 
 Create repos, push code, manage secrets, and configure CI/CD on GitHub via the API.
 
-## Prerequisites
+## Authentication
 
-A GitHub Fine-grained Personal Access Token (PAT) with these scopes:
+Requires a GitHub Fine-grained PAT stored in secret-vault as `github.pat` or `GITHUB_TOKEN` env var.
+For setup instructions, see [references/pat-setup.md](references/pat-setup.md).
+
+Required PAT scopes:
 - **Repository**: Read & Write (create repos, push code)
 - **Secrets**: Read & Write (manage Actions secrets)
 - **Administration**: Read & Write (branch protection, repo settings)
-
-The PAT should be stored in secret-vault as `github.pat`, or set as `GITHUB_TOKEN` env var.
-
-## Onboarding
-
-If no token is configured, walk the user through:
-
-1. Go to https://github.com/settings/tokens?type=beta (Fine-grained tokens)
-2. Click **Generate new token**
-3. Set token name: `agent-automation`
-4. Set expiration: 90 days (recommend rotation via playbook-generator)
-5. Under **Repository access**: select "All repositories" or specific repos
-6. Under **Permissions → Repository permissions**:
-   - Contents: Read & Write
-   - Administration: Read & Write
-   - Secrets: Read & Write
-   - Workflows: Read & Write
-   - Metadata: Read-only (auto-granted)
-7. Click **Generate token**
-8. ⚠️ **Copy the token NOW — it will not be shown again**
-9. Store it: `python3 secret-vault/scripts/vault.py set github.pat ghp_...`
 
 ## Operations
 
@@ -95,16 +77,15 @@ Read `schemas/repo-defaults.yaml` for default repository settings:
 
 ## How This Differs from Native `gh` CLI
 
-| | This skill | Native `gh` CLI |
-|---|---|---|
-| **Install required** | Python 3 only | `gh` CLI (`brew install gh`) |
-| **Auth method** | PAT in secret-vault or `GITHUB_TOKEN` env var | `gh auth login` (OAuth or PAT) |
-| **Auth storage** | Encrypted vault | `~/.config/gh/hosts.yml` (plaintext) |
-| **CI/CD templates** | Built-in workflow templates for Python, Node, Terraform, Docker | None — you write them yourself |
-| **Repo defaults** | Applies branch protection, labels, and settings from `schemas/repo-defaults.yaml` | Manual setup |
-| **Offline-friendly** | Direct REST API calls, no CLI dependency | Requires `gh` binary |
+See [references/vs-gh-cli.md](references/vs-gh-cli.md) for a full comparison.
 
-Use this skill when `gh` isn't available, when you want encrypted token storage, or when you want opinionated repo setup with CI/CD templates baked in.
+## Gotchas
+
+- Fine-grained PATs expire — set a calendar reminder for rotation
+- `add-secret` requires `pynacl` (libsodium) for sealed-box encryption — `pip install pynacl` first
+- Classic PATs and fine-grained PATs have different scope models — don't mix them up
+- Rate limit: 5000 req/hr authenticated; the script doesn't retry on 429
+- Creating a repo doesn't add a remote to your local git — you still need `git remote add`
 
 ## Integration
 

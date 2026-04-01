@@ -21,11 +21,9 @@ args:
 Create projects, push code, manage CI/CD variables, and configure pipelines on
 GitLab.com or self-hosted instances.
 
-## Prerequisites
+## Authentication
 
-A GitLab Personal Access Token with these scopes:
-- **api** — full API access (create projects, manage variables)
-- **write_repository** — push code
+Requires a GitLab PAT with `api` and `write_repository` scopes.
 
 Store in secret-vault:
 - `gitlab.token` — the PAT
@@ -33,26 +31,7 @@ Store in secret-vault:
 
 Or use env vars: `GITLAB_TOKEN`, `GITLAB_HOST`.
 
-## Onboarding
-
-If no token is configured, walk the user through:
-
-### GitLab.com
-1. Go to https://gitlab.com/-/user_settings/personal_access_tokens
-2. Click **Add new token**
-3. Name: `agent-automation`, Expiration: 90 days
-4. Scopes: `api`, `write_repository`
-5. Click **Create personal access token**
-6. ⚠️ **Copy the token NOW — it will not be shown again**
-7. Store: `python3 secret-vault/scripts/vault.py set gitlab.token glpat-...`
-
-### Self-Hosted GitLab
-Same steps, but at `https://your-instance.com/-/user_settings/personal_access_tokens`
-
-Then also store the host:
-```bash
-python3 secret-vault/scripts/vault.py set gitlab.host https://your-instance.com
-```
+For setup instructions (GitLab.com and self-hosted), see [references/pat-setup.md](references/pat-setup.md).
 
 ## Operations
 
@@ -95,17 +74,14 @@ Read `schemas/project-defaults.yaml` for default project settings.
 
 ## How This Differs from Native `glab` CLI
 
-| | This skill | Native `glab` CLI |
-|---|---|---|
-| **Install required** | Python 3 only | `glab` CLI (`brew install glab`) |
-| **Auth method** | PAT in secret-vault or `GITLAB_TOKEN` env var | `glab auth login` (OAuth or PAT) |
-| **Auth storage** | Encrypted vault | `~/.config/glab-cli/config.yml` (plaintext) |
-| **Self-hosted** | Set `gitlab.host` in vault — all API calls route automatically | `glab auth login --hostname` |
-| **CI/CD templates** | Built-in `.gitlab-ci.yml` templates for Python, Node, Terraform, Docker | None — you write them yourself |
-| **Project defaults** | Applies settings from `schemas/project-defaults.yaml` | Manual setup |
-| **Offline-friendly** | Direct REST API calls, no CLI dependency | Requires `glab` binary |
+See [references/vs-glab-cli.md](references/vs-glab-cli.md) for a full comparison.
 
-Use this skill when `glab` isn't available, when you want encrypted token storage, or when you want opinionated project setup with pipeline templates baked in.
+## Gotchas
+
+- Self-hosted: if the instance uses a self-signed cert, set `REQUESTS_CA_BUNDLE` or `--no-verify`
+- `api` scope is very broad — consider `read_api` + `write_repository` for narrower access
+- CI variable masking requires the value to be at least 8 chars and match a regex
+- Rate limit varies by instance — self-hosted admins may set it lower than gitlab.com
 
 ## GitLab API Notes
 

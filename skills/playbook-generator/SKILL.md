@@ -114,6 +114,12 @@ To create a new org standard:
 2. Edit the YAML to add client-specific requirements
 3. The generator will auto-detect and merge it on next run
 
+## Gotchas
+
+- Org standards in `~/.agent/playbook-standards/` must be valid YAML — a syntax error silently falls back to baseline only
+- The baseline requires a rollback section — if the operation is truly irreversible, document why
+- Generated playbooks are drafts — always have a human review before using in production
+
 ## Schemas
 
 - `schemas/baseline-standard.yaml` — the default conformance standard

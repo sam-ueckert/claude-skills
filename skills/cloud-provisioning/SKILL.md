@@ -49,6 +49,12 @@ After onboarding, the user has:
 - A verification script: `scripts/verify-credentials.sh` that tests all configured clouds
 - A reference card (printed at the end) showing env var names and vault keys
 
+## Gotchas
+
+- The per-cloud onboarding references (references/aws-onboarding.md etc.) must exist — read them before starting
+- IAM/RBAC propagation can take up to 60 seconds — verification commands may fail immediately after creation
+- One-time secrets (AWS secret key, Azure client secret, GCP JSON key) are shown ONCE — if missed, you must recreate
+
 ## Schemas
 
 - `schemas/aws-compute-policy.json` — IAM policy for EC2/ECS/Lambda

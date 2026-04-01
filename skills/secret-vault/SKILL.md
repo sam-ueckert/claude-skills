@@ -111,85 +111,26 @@ python3 scripts/vault.py export --format gitlab-ci
 python3 scripts/vault.py export --format env
 ```
 
-## Vault File Format (decrypted)
+## Vault File Format
 
-```json
-{
-  "version": 1,
-  "secrets": {
-    "aws.access_key_id": {
-      "value": "AKIA...",
-      "tags": ["env:prod", "service:aws"],
-      "created": "2025-03-25T10:00:00Z",
-      "rotated": null
-    }
-  }
-}
-```
+See [references/vault-format.md](references/vault-format.md) for the decrypted JSON structure.
 
-## Adding Secrets Without Exposing Them to the AI Agent
+## Safe Import (No LLM Exposure)
 
-Anything typed in the agent chat or passed as a command argument through the agent is sent to
-the LLM provider's API. To add secrets safely, use the **file import** workflow — the agent only
-sees the filename, never the file contents.
-
-### Step-by-step
-
-1. **Create a secrets file in your editor or terminal** (not through the agent):
-
-   `.env` format:
-   ```
-   # secrets.env
-   github.token=ghp_xxxxxxxxxxxx
-   aws.access_key_id=AKIA...
-   aws.secret_access_key=wJalr...
-   ```
-
-   Or JSON format:
-   ```json
-   {
-     "github.token": "ghp_xxxxxxxxxxxx",
-     "aws.access_key_id": "AKIA...",
-     "aws.secret_access_key": "wJalr..."
-   }
-   ```
-
-2. **Ask the agent to import the file:**
-
-   > "import secrets from secrets.env into the vault"
-
-   The agent runs:
-   ```bash
-   python3 scripts/vault.py import secrets.env
-   ```
-
-3. **The file is automatically shredded** — overwritten with random bytes, then deleted.
-   Use `--keep` if you want to preserve it.
-
-### What stays private
-
-| Step | Who sees it | Sent to LLM? |
-|------|------------|---------------|
-| You write `secrets.env` | You only | No |
-| Agent runs `vault.py import secrets.env` | Agent sees the filename | Filename only |
-| `vault.py` reads and encrypts the file | Local Python process | No |
-| File is overwritten + deleted | Nobody | No |
-| Secrets stored in `vault.enc` | Encrypted on disk | No |
-| `vault.py get <key>` at runtime | Local process / stdout | No (unless piped into chat) |
-
-### Other safe alternatives
-
-- **Run `vault.py set` yourself** in a separate terminal — not through the agent
-- **Use `vault.py init --keychain`** and the OS keychain for the master key
-- **Never ask the agent to read or cat a secrets file** — that sends the contents to the API
+For adding secrets without exposing them to the AI agent, see [references/safe-import.md](references/safe-import.md).
 
 ## Security Considerations
 
-- The vault file (`vault.enc`) is safe to commit to version control (it's encrypted),
-  but `.vault-meta` should be gitignored if it contains a passphrase salt you want private
-- Never log or print secret values — the audit log records key names and operations only
-- The `get` command outputs to stdout; pipe carefully
-- Rotation does not propagate to cloud providers — use cloud-provisioning for that
+See [references/security.md](references/security.md) for security notes and caveats.
+
+## Gotchas
+
+- `vault.py get` outputs to stdout — if piped into agent chat, the secret goes to the LLM API
+- Keychain init on headless Linux requires `gnome-keyring-daemon` or similar running
+- Passphrase mode: losing the passphrase = losing the vault (no recovery)
+- `.vault-meta` contains the salt — deleting it makes passphrase-derived keys unrecoverable
+- `import` shreds the source file by default — use `--keep` if you need it
+- File permissions: `vault.enc` should be 600; the script doesn't enforce this
 
 ## Integration with Other Skills
 

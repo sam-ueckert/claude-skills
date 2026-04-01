@@ -1,6 +1,6 @@
 ---
 name: clip-img
-description: Paste clipboard images into a terminal-based AI agent as file attachments using a Raycast hotkey (macOS only). Bridges the gap between clipboard images and terminal agents.
+description: "macOS-only Raycast script to paste clipboard images into a terminal-based AI agent as file attachments. Use when the user wants to paste/attach a screenshot or clipboard image to a terminal agent like Claude Code. Requires macOS with Raycast installed."
 user-invokable: true
 args: []
 ---
@@ -58,6 +58,13 @@ Add the image directory to your agent's allowed read paths. For example, in your
 2. Click into the agent's terminal input
 3. Press your hotkey (`⌥⇧V`)
 4. The image attaches above the prompt — same as pasting a file from Finder
+
+## Gotchas
+
+- macOS only — won't work on Linux or Windows
+- Requires Accessibility permission for Raycast — without it, the Cmd+V simulation fails silently
+- If the clipboard contains text (not an image), the script exits with an error but the agent won't see it
+- Images accumulate in ~/Pictures/clip-img/ — clean up periodically
 
 ## Files
 

@@ -82,6 +82,12 @@ Forces a refresh of the cached skill index. The cache lives at `~/.cache/skill-i
 3. Run `show <name>` to get full details
 4. User can then install by cloning/copying the skill directory into their project
 
+## Gotchas
+
+- Cache lives at ~/.cache/skill-index/ and expires after 1 hour — stale results possible after repo updates
+- Private repos require a GitHub token — without it, all API calls return 404 (not 401)
+- The script parses YAML frontmatter only — skills without proper frontmatter won't appear
+
 ## Notes
 
 - The index is built by scanning `skills/` directories in the repo for `SKILL.md` files

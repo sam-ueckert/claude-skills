@@ -102,6 +102,13 @@ gantt
 ### Also supported
 stateDiagram-v2, pie, classDiagram, gitgraph
 
+## Gotchas
+
+- First run downloads Chromium via Puppeteer (~300MB) — will fail if offline or disk-constrained
+- Linux ARM64 (e.g. Raspberry Pi): the script uses system Chromium, not Puppeteer's — `chromium-browser` must be installed
+- `mindmap` syntax doesn't support links/URLs in nodes
+- Very large diagrams may timeout — increase the Puppeteer timeout in render.sh or split the diagram
+
 ## Tips
 
 - `graph TD` = top-down, `graph LR` = left-right
