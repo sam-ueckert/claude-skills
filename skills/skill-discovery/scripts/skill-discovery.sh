@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO="${SKILL_INDEX_REPO:-sam-ueckert/claude-skills}"
 BRANCH="${SKILL_INDEX_BRANCH:-main}"
-CACHE_DIR="$HOME/.cache/skill-index"
+CACHE_DIR="$HOME/.cache/skill-discovery"
 CACHE_FILE="$CACHE_DIR/${REPO//\//_}_${BRANCH}.json"
 CACHE_TTL=3600  # 1 hour in seconds
 VAULT_SCRIPT="$(cd "$(dirname "$0")/../../secret-vault/scripts" && pwd)/vault.py"
@@ -112,7 +112,7 @@ cmd_list() {
 }
 
 cmd_search() {
-  local query="${1:?Usage: skill-index.sh search <query>}"
+  local query="${1:?Usage: skill-discovery.sh search <query>}"
   ensure_index
   local q_lower
   q_lower=$(echo "$query" | tr '[:upper:]' '[:lower:]')
@@ -125,7 +125,7 @@ cmd_search() {
 }
 
 cmd_show() {
-  local skill="${1:?Usage: skill-index.sh show <skill-name>}"
+  local skill="${1:?Usage: skill-discovery.sh show <skill-name>}"
   local raw_url="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${skill}/SKILL.md"
   local token
   token=$(resolve_token)
@@ -155,7 +155,7 @@ case "${1:-help}" in
   show)    cmd_show "${2:-}" ;;
   refresh) cmd_refresh ;;
   *)
-    echo "Usage: skill-index.sh <command> [args]"
+    echo "Usage: skill-discovery.sh <command> [args]"
     echo ""
     echo "Commands:"
     echo "  list              List all available skills"

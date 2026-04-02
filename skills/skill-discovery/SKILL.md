@@ -1,5 +1,5 @@
 ---
-name: skill-index
+name: skill-discovery
 description: "Browse and search a curated index of AI agent skills from a GitHub repo. Use when the user wants to find, list, browse, or install skills, or asks what skills are available."
 user-invokable: true
 args:
@@ -39,14 +39,14 @@ python3 secret-vault/scripts/vault.py set github.token <your-token>
 
 All scripts are in this skill's `scripts/` directory.
 
-- **macOS / Linux**: `bash scripts/skill-index.sh <command>` (requires `curl` and `jq`)
-- **Windows**: `pwsh scripts/skill-index.ps1 <command>` (uses `Invoke-RestMethod`)
+- **macOS / Linux**: `bash scripts/skill-discovery.sh <command>` (requires `curl` and `jq`)
+- **Windows**: `pwsh scripts/skill-discovery.ps1 <command>` (uses `Invoke-RestMethod`)
 
 ### List all skills
 
 ```bash
-bash scripts/skill-index.sh list
-pwsh scripts/skill-index.ps1 list   # Windows
+bash scripts/skill-discovery.sh list
+pwsh scripts/skill-discovery.ps1 list   # Windows
 ```
 
 Displays all skills with their name and description.
@@ -54,7 +54,7 @@ Displays all skills with their name and description.
 ### Search skills
 
 ```bash
-bash scripts/skill-index.sh search "diagram"
+bash scripts/skill-discovery.sh search "diagram"
 ```
 
 Searches skill names and descriptions (case-insensitive). Returns matching skills.
@@ -62,7 +62,7 @@ Searches skill names and descriptions (case-insensitive). Returns matching skill
 ### Show skill details
 
 ```bash
-bash scripts/skill-index.sh show <skill-name>
+bash scripts/skill-discovery.sh show <skill-name>
 ```
 
 Fetches and displays the full SKILL.md for a given skill.
@@ -70,10 +70,10 @@ Fetches and displays the full SKILL.md for a given skill.
 ### Refresh cache
 
 ```bash
-bash scripts/skill-index.sh refresh
+bash scripts/skill-discovery.sh refresh
 ```
 
-Forces a refresh of the cached skill index. The cache lives at `~/.cache/skill-index/` and expires after 1 hour.
+Forces a refresh of the cached skill index. The cache lives at `~/.cache/skill-discovery/` and expires after 1 hour.
 
 ## Workflow
 
@@ -84,7 +84,7 @@ Forces a refresh of the cached skill index. The cache lives at `~/.cache/skill-i
 
 ## Gotchas
 
-- Cache lives at ~/.cache/skill-index/ and expires after 1 hour — stale results possible after repo updates
+- Cache lives at ~/.cache/skill-discovery/ and expires after 1 hour — stale results possible after repo updates
 - Private repos require a GitHub token — without it, all API calls return 404 (not 401)
 - The script parses YAML frontmatter only — skills without proper frontmatter won't appear
 

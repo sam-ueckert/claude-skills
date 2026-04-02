@@ -1,5 +1,5 @@
-# skill-index.ps1 — GitHub API skill index with caching
-# Usage: skill-index.ps1 <list|search|show|refresh> [args]
+# skill-discovery.ps1 — GitHub API skill index with caching
+# Usage: skill-discovery.ps1 <list|search|show|refresh> [args]
 
 param(
     [Parameter(Position = 0)]
@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 
 $Repo = if ($env:SKILL_INDEX_REPO) { $env:SKILL_INDEX_REPO } else { "sam-ueckert/claude-skills" }
 $Branch = if ($env:SKILL_INDEX_BRANCH) { $env:SKILL_INDEX_BRANCH } else { "main" }
-$CacheDir = Join-Path $HOME ".cache" "skill-index"
+$CacheDir = Join-Path $HOME ".cache" "skill-discovery"
 $CacheFile = Join-Path $CacheDir "$($Repo -replace '/', '_')_${Branch}.json"
 $CacheTTL = 3600  # 1 hour in seconds
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
@@ -117,7 +117,7 @@ function Invoke-List {
 
 function Invoke-Search {
     if (-not $Arg1) {
-        Write-Error "Usage: skill-index.ps1 search <query>"
+        Write-Error "Usage: skill-discovery.ps1 search <query>"
         exit 1
     }
     Ensure-Index
@@ -134,7 +134,7 @@ function Invoke-Search {
 
 function Invoke-Show {
     if (-not $Arg1) {
-        Write-Error "Usage: skill-index.ps1 show <skill-name>"
+        Write-Error "Usage: skill-discovery.ps1 show <skill-name>"
         exit 1
     }
     $rawUrl = "https://raw.githubusercontent.com/$Repo/$Branch/$Arg1/SKILL.md"
@@ -163,7 +163,7 @@ switch ($Command) {
     "refresh" { Invoke-Refresh }
     default {
         @"
-Usage: skill-index.ps1 <command> [args]
+Usage: skill-discovery.ps1 <command> [args]
 
 Commands:
   list              List all available skills
