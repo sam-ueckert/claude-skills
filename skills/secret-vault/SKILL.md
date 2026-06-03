@@ -18,7 +18,28 @@ args:
 
 # Secret Vault
 
-Encrypted local credential storage with tiered key management. The vault is a single
+Encrypted local credential storage with tiered key management.
+
+## Installation
+
+```bash
+# Install Python dependency
+pip3 install cryptography
+
+# Register the skill (OpenClaw)
+ln -sf ~/repos/claude-skills/skills/secret-vault skills/secret-vault
+
+# Initialize the vault (first time)
+python3 skills/secret-vault/scripts/vault.py init
+```
+
+**Key management options** (choose one):
+- `--keychain` — OS keychain (recommended for local dev — key never touches disk)
+- `--passphrase` — Argon2id-derived key (no infrastructure required)
+- `--kms aws/azure/gcp` — Cloud KMS (enterprise)
+
+**Claude Code:**
+Add to `CLAUDE.md`: `read ~/repos/claude-skills/skills/secret-vault/SKILL.md` The vault is a single
 encrypted JSON file that holds all secrets, decrypted on demand and never written to
 disk in plaintext.
 

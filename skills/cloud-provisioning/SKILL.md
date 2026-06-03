@@ -15,7 +15,36 @@ args:
 
 # Cloud Provisioning
 
-Interactive onboarding for AWS, Azure, and GCP compute credentials. Each cloud
+Interactive onboarding for AWS, Azure, and GCP compute credentials.
+
+## Installation
+
+**Dependencies:**
+```bash
+# AWS
+pip3 install boto3
+
+# Azure
+pip3 install azure-identity azure-mgmt-authorization
+
+# GCP
+pip3 install google-cloud-iam google-auth
+```
+
+Or install all at once:
+```bash
+pip3 install boto3 azure-identity azure-mgmt-authorization google-cloud-iam google-auth
+```
+
+**Register the skill** (OpenClaw):
+```bash
+ln -sf ~/repos/claude-skills/skills/cloud-provisioning skills/cloud-provisioning
+```
+
+**Claude Code:**
+Add to `CLAUDE.md`: `read ~/repos/claude-skills/skills/cloud-provisioning/SKILL.md`
+
+This skill stores credentials via the secret-vault skill — install that first. Each cloud
 walkthrough creates the minimum-viable credential with least-privilege scope, warns
 at the exact moment when a one-time secret is shown, and hands off to secret-vault
 for storage.

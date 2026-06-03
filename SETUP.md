@@ -36,6 +36,51 @@ The setup script will:
 | Python 3 | secret-vault, github, gitlab | `brew install python` / `winget install Python.Python.3.12` |
 | curl + jq | lucidchart, skill-index | pre-installed on macOS; `sudo apt install curl jq` on Linux |
 
+## Platform-Specific Wiring
+
+### OpenClaw
+
+Symlink skill directories into your workspace `skills/` folder. OpenClaw auto-discovers
+any directory under `skills/` that contains a `SKILL.md` file.
+
+```bash
+# From your workspace root (e.g. ~/repos/my-agent-brain)
+mkdir -p skills
+
+# Symlink a single skill
+ln -sf ~/repos/claude-skills/skills/mermaid skills/mermaid
+
+# Symlink all skills at once
+for d in ~/repos/claude-skills/skills/*/; do
+    ln -sf "$d" "skills/$(basename "$d")"
+done
+```
+
+Or register the skills directory globally in `openclaw.json` under `skills.paths`.
+
+### Claude Code
+
+Claude Code reads `CLAUDE.md` at session start. Add skill references there:
+
+```markdown
+## Skills
+
+Read skill files on demand when the task requires them:
+- **Diagrams**: `read ~/repos/claude-skills/skills/mermaid/SKILL.md`
+- **Secrets**: `read ~/repos/claude-skills/skills/secret-vault/SKILL.md`
+- **GitHub**: `read ~/repos/claude-skills/skills/github/SKILL.md`
+- **GitLab**: `read ~/repos/claude-skills/skills/gitlab/SKILL.md`
+- **Cloud**: `read ~/repos/claude-skills/skills/cloud-provisioning/SKILL.md`
+- **Playbooks**: `read ~/repos/claude-skills/skills/playbook-generator/SKILL.md`
+```
+
+The agent will read the SKILL.md file the first time the skill is needed in a session.
+
+### Cursor / Continue / Other Agents
+
+Any agent that supports reading files on demand can use these skills. Reference the
+`SKILL.md` path in your agent's system prompt or context file.
+
 ## Manual Setup
 
 If you prefer not to use the setup script:

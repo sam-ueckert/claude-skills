@@ -15,22 +15,68 @@ Reusable AI agent skills for infrastructure automation, cloud provisioning, DevO
 | `/cloud-provisioning` | ✅ Ready | Onboard and provision compute credentials for AWS, Azure, and GCP |
 | `/env-scaffolder` | ✅ Ready | Scaffold project environments with directory structure, configs, and CI/CD templates |
 | `/playbook-generator` | ✅ Ready | Generate operational playbooks and SOPs conforming to organizational standards |
-| `/skill-index` | ✅ Ready | Browse and search the curated index of available skills from this repo |
+| `/skill-discovery` | ✅ Ready | Browse and search the curated index of available skills from this repo |
 | `/clip-img` | ✅ Ready | Paste clipboard images into a terminal-based AI agent via Raycast (macOS only) |
 
-## Setup
+## Installation
 
-See [SETUP.md](SETUP.md) for full installation instructions.
+### OpenClaw
 
 ```bash
-# 1. Clone this repo
+git clone https://github.com/sam-ueckert/claude-skills.git
+```
+
+Then symlink skills into your agent workspace:
+
+```bash
+# From your OpenClaw workspace (e.g. ~/repos/my-brain)
+for d in ~/repos/claude-skills/skills/*/; do
+    skill="$(basename "$d")"
+    ln -sf "$d" "skills/$skill"
+done
+```
+
+Or add to `openclaw.json` to register the path globally:
+
+```json
+{
+  "skills": {
+    "paths": ["/home/youruser/repos/claude-skills/skills"]
+  }
+}
+```
+
+Skills are auto-discovered at session start.
+
+### Claude Code
+
+```bash
+git clone https://github.com/sam-ueckert/claude-skills.git
+bash claude-skills/setup.sh
+```
+
+The setup script installs dependencies and prints the paths to each skill. To use a skill in a project, add it to your `CLAUDE.md`:
+
+```markdown
+## Available Skills
+
+To use a skill, read its SKILL.md file:
+- Mermaid diagrams: read ~/repos/claude-skills/skills/mermaid/SKILL.md
+- Secret vault: read ~/repos/claude-skills/skills/secret-vault/SKILL.md
+- GitHub: read ~/repos/claude-skills/skills/github/SKILL.md
+```
+
+Then in any Claude Code session, the agent will load the skill on demand.
+
+### Quick setup (both platforms)
+
+```bash
 git clone https://github.com/sam-ueckert/claude-skills.git
 cd claude-skills
-
-# 2. Run the setup script (installs dependencies, links skills)
-bash setup.sh          # macOS / Linux
-pwsh setup.ps1         # Windows
+bash setup.sh
 ```
+
+See [SETUP.md](SETUP.md) for full installation instructions.
 
 ## Available Tools
 
@@ -93,7 +139,7 @@ claude-skills/
 │   ├── cloud-provisioning/# Cloud IAM onboarding
 │   ├── env-scaffolder/    # Project scaffolding
 │   ├── playbook-generator/# Operational playbooks
-│   ├── skill-index/       # Skill browser
+│   ├── skill-discovery/   # Skill browser
 │   └── clip-img/          # Clipboard image paste (macOS)
 ├── setup.sh               # macOS/Linux setup
 ├── setup.ps1              # Windows setup

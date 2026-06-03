@@ -15,6 +15,25 @@ args:
 
 Switch between Anthropic OAuth auth profiles in OpenClaw.
 
+## Installation
+
+This skill requires OpenClaw with multiple auth profiles configured.
+
+**Set up auth profiles** in `~/.openclaw/agents/main/agent/auth-profiles.json`:
+```json
+{
+  "anthropic:primary": { ... },
+  "anthropic:backup": { ... }
+}
+```
+
+**Register the skill** (OpenClaw):
+```bash
+ln -sf ~/repos/claude-skills/skills/auth-switch skills/auth-switch
+```
+
+No additional dependencies required.
+
 ## Commands
 
 Resolve `scripts/auth-switch.sh` relative to this skill's directory.
