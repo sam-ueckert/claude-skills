@@ -179,19 +179,40 @@ def vault_status() -> str:
 
 
 @mcp.tool()
-def vault_init(key_tier: str = "keychain") -> str:
+def vault_init(key_tier: str = "keychain", force: bool = False) -> str:
     """Initialize or re-initialize the secret vault.
+
+    WARNING: Re-initializing an existing vault generates a new key and
+    writes an empty vault, permanently destroying all stored secrets.
+    Pass force=True to confirm destruction of existing data.
 
     Args:
         key_tier: Master key protection method.
                   'keychain' — random key stored in OS keychain (recommended).
                   'passphrase' — passphrase-derived key, collected via native prompt.
                   'env' — key read from VAULT_KEY environment variable.
+        force:    Must be True to overwrite a vault that already contains secrets.
     """
     global _cached_key
 
     if key_tier not in ("keychain", "passphrase", "env"):
         return "Error: key_tier must be 'keychain', 'passphrase', or 'env'."
+
+    # Guard: refuse to wipe an existing vault with secrets unless force=True
+    if VAULT_FILE.exists() and not force:
+        try:
+            existing_key = _get_key()
+            existing_vault = load_vault(existing_key)
+            count = len(existing_vault.get("secrets", {}))
+            if count > 0:
+                return (
+                    f"Error: vault already contains {count} secret(s). "
+                    "Re-initializing will permanently destroy them. "
+                    "Call vault_init with force=True to confirm, or use "
+                    "vault_rekey to rotate the master key while preserving secrets."
+                )
+        except Exception:
+            pass  # Can't read existing vault — allow init to proceed
 
     ensure_vault_dir()
     meta = _read_meta()
@@ -235,6 +256,81 @@ def vault_init(key_tier: str = "keychain") -> str:
     _cached_key = key
     audit("init", key_tier)
     return f"Vault initialized. Key tier: {key_tier}"
+
+
+@mcp.tool()
+def vault_rekey(new_key_tier: str = "keychain") -> str:
+    """Rotate the vault master key while preserving all stored secrets.
+
+    Decrypts the vault with the current key, generates or derives a new key
+    (collected via native OS dialog for passphrase tier), re-encrypts all
+    secrets under the new key, and updates the key tier in metadata.
+
+    The new key is never exposed to the LLM — keychain keys are random and
+    stored in the OS keychain; passphrase keys are derived inside this process
+    from input captured via native dialog.
+
+    Args:
+        new_key_tier: Key tier for the new key.
+                      'keychain' — new random key stored in OS keychain.
+                      'passphrase' — new passphrase-derived key via native prompt.
+                      'env' — new key read from VAULT_KEY environment variable.
+    """
+    global _cached_key
+
+    if new_key_tier not in ("keychain", "passphrase", "env"):
+        return "Error: new_key_tier must be 'keychain', 'passphrase', or 'env'."
+
+    # Decrypt vault with current key
+    try:
+        current_key = _get_key()
+        vault = load_vault(current_key)
+    except RuntimeError as e:
+        return f"Error unlocking vault with current key: {e}"
+
+    secret_count = len(vault.get("secrets", {}))
+
+    # Generate / collect new key
+    meta = _read_meta()
+    meta["key_tier"] = new_key_tier
+
+    if new_key_tier == "keychain":
+        if platform.system() not in ("Darwin", "Linux"):
+            return f"Error: keychain not supported on {platform.system()}."
+        key_hex = os.urandom(32).hex()
+        try:
+            _store_keychain(key_hex)
+        except Exception as e:
+            return f"Error storing new key in keychain: {e}"
+        new_key = bytes.fromhex(key_hex)
+
+    elif new_key_tier == "passphrase":
+        # Remove stale salt so _key_from_passphrase generates a fresh one
+        meta.pop("salt", None)
+        _write_meta(meta)
+        try:
+            passphrase = _native_prompt(
+                "Enter new vault passphrase:",
+                "Agent Secret Vault — Rekey"
+            )
+        except RuntimeError as e:
+            return f"Cancelled: {e}"
+        new_key = _key_from_passphrase(passphrase)
+
+    else:  # env
+        new_key = _key_from_env()
+        if not new_key:
+            return "Error: VAULT_KEY environment variable is not set."
+
+    # Re-encrypt and save
+    _write_meta(meta)
+    save_vault(vault, new_key)
+    _cached_key = new_key
+    audit("rekey", new_key_tier)
+    return (
+        f"Vault rekeyed. New key tier: {new_key_tier}. "
+        f"{secret_count} secret(s) preserved."
+    )
 
 
 @mcp.tool()
