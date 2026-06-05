@@ -66,7 +66,8 @@ Add to the `permissions.allow` array:
 "mcp__secret-vault__vault_delete",
 "mcp__secret-vault__vault_exists",
 "mcp__secret-vault__vault_get_metadata",
-"mcp__secret-vault__vault_update_tags"
+"mcp__secret-vault__vault_update_tags",
+"mcp__secret-vault__vault_rekey"
 ```
 
 ### 3. Restart Claude Code
@@ -119,7 +120,7 @@ Check initialization state, key tier, and number of stored secrets.
 
 ---
 
-### `vault_init(key_tier)`
+### `vault_init(key_tier, force?)`
 Initialize or re-initialize the vault.
 
 | `key_tier` | Behaviour |
@@ -128,7 +129,28 @@ Initialize or re-initialize the vault.
 | `passphrase` | Argon2id-derived key — prompts via native dialog |
 | `env` | Reads `VAULT_KEY` hex env var |
 
+> **Warning:** Re-initializing creates a new empty vault, permanently destroying
+> all stored secrets. The tool refuses if secrets exist unless `force=True` is
+> passed. Use `vault_rekey` to rotate the master key while preserving secrets.
+
 **Ask Claude:** `"Initialize the vault"` or `"Initialize with a passphrase"`
+
+---
+
+### `vault_rekey(new_key_tier)`
+Rotate the vault master key while preserving all stored secrets.
+
+Decrypts with the current key, generates or derives a new key via native
+dialog (for passphrase), re-encrypts every secret under the new key, and
+updates the key tier. The new key never passes through the LLM.
+
+| `new_key_tier` | Behaviour |
+|---|---|
+| `keychain` | New random key stored in OS Keychain |
+| `passphrase` | New passphrase collected via native dialog |
+| `env` | New key read from `VAULT_KEY` env var |
+
+**Ask Claude:** `"Rekey the vault"` or `"Rotate the vault master key to use a passphrase"`
 
 ---
 
