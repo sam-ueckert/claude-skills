@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+# SOURCE OF TRUTH: https://github.com/sam-ueckert/vault-mcp
+# Edit here, then run sync.sh to propagate to ai-skills-catalog and claude-skills.
 """
 Vault core — encryption, key resolution, and vault I/O.
-Adapted from secret-vault skill (ai-skills-catalog).
 """
 
 import base64

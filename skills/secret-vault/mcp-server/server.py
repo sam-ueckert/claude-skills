@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SOURCE OF TRUTH: https://github.com/sam-ueckert/vault-mcp
+# Edit here, then run sync.sh to propagate to ai-skills-catalog and claude-skills.
 """
 vault-mcp: MCP server for secure local secret storage.
 
@@ -539,6 +541,92 @@ def vault_update_tags(name: str, tags: str) -> str:
     save_vault(vault, key)
     audit("update_tags", name)
     return f"Tags updated for '{name}': {tag_list if tag_list else '(cleared)'}"
+
+
+@mcp.tool()
+def vault_import(file_path: str, tags: str = "", keep: bool = False) -> str:
+    """Import secrets from a file on disk. Supports KEY=VALUE (.env) and JSON formats.
+
+    This is the safe way to bulk-load secrets — write them to a file yourself,
+    then call this tool. The file is read directly by the MCP server; values
+    never pass through the LLM context.
+
+    The file is securely deleted after import (overwritten with random data,
+    then removed). Pass keep=True to preserve it.
+
+    Args:
+        file_path: Absolute path to a .env (KEY=VALUE) or JSON ({"key": "value"}) file.
+        tags:      Optional comma-separated tags to apply to all imported secrets.
+        keep:      If True, leave the file on disk after import (default: False).
+    """
+    path = Path(file_path).expanduser()
+    if not path.exists():
+        return f"Error: file not found: {file_path}"
+    if not path.is_file():
+        return f"Error: not a file: {file_path}"
+
+    try:
+        content = path.read_text().strip()
+    except OSError as e:
+        return f"Error reading file: {e}"
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    now = datetime.now(timezone.utc).isoformat()
+    imported: dict[str, str] = {}
+
+    if content.startswith("{"):
+        import json
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as e:
+            return f"Error: invalid JSON: {e}"
+        for k, v in data.items():
+            imported[str(k)] = str(v)
+    else:
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("export "):
+                line = line[7:]
+            if "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            imported[k.strip()] = v.strip().strip("'\"")
+
+    if not imported:
+        return "Error: no secrets found in file."
+
+    try:
+        key = _get_key()
+        vault = load_vault(key)
+    except RuntimeError as e:
+        return f"Error unlocking vault: {e}"
+
+    for name, value in imported.items():
+        vault["secrets"][name] = {
+            "value": value,
+            "tags": tag_list,
+            "created": now,
+            "rotated": None,
+        }
+    save_vault(vault, key)
+    audit("import", f"{len(imported)} keys from {path.name}")
+
+    if not keep:
+        try:
+            size = path.stat().st_size
+            path.write_bytes(os.urandom(max(size, 64)))
+            path.unlink()
+            shred_note = " File securely deleted."
+        except OSError:
+            path.unlink(missing_ok=True)
+            shred_note = " File deleted."
+    else:
+        shred_note = ""
+
+    names = ", ".join(sorted(imported))
+    return f"Imported {len(imported)} secret(s): {names}.{shred_note}"
 
 
 # ---------------------------------------------------------------------------
