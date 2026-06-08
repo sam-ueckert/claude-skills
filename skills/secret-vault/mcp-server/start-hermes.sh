@@ -9,14 +9,26 @@
 
 if [ -z "$VAULT_KEY" ]; then
     if [ -n "$SWABBY_VAULT_KEY" ]; then
-        DERIVED=$(python3 -c "import base64,os; print(base64.b64decode(os.environ['SWABBY_VAULT_KEY']).hex())" 2>/dev/null)
+        # Some env propagations strip the base64 padding; fix it
+        PADDED_KEY="${SWABBY_VAULT_KEY}"
+        case ${#PADDED_KEY} in
+            42) PADDED_KEY="${PADDED_KEY}==" ;;
+            43) PADDED_KEY="${PADDED_KEY}=" ;;
+        esac
+        DERIVED=$(python3 -c "import base64; print(base64.b64decode('${PADDED_KEY}').hex())" 2>/dev/null)
         if [ -n "$DERIVED" ]; then
             export VAULT_KEY="$DERIVED"
         fi
-    elif [ -f "/root/.hermes/.env" ]; then
+    fi
+    if [ -z "$VAULT_KEY" ] && [ -f "/root/.hermes/.env" ]; then
         . /root/.hermes/.env 2>/dev/null
         if [ -n "$SWABBY_VAULT_KEY" ]; then
-            DERIVED=$(python3 -c "import base64,os; print(base64.b64decode(os.environ['SWABBY_VAULT_KEY']).hex())" 2>/dev/null)
+            PADDED_KEY="${SWABBY_VAULT_KEY}"
+            case ${#PADDED_KEY} in
+                42) PADDED_KEY="${PADDED_KEY}==" ;;
+                43) PADDED_KEY="${PADDED_KEY}=" ;;
+            esac
+            DERIVED=$(python3 -c "import base64; print(base64.b64decode('${PADDED_KEY}').hex())" 2>/dev/null)
             if [ -n "$DERIVED" ]; then
                 export VAULT_KEY="$DERIVED"
             fi
