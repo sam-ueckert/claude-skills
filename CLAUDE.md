@@ -22,8 +22,11 @@ enterprise-vetted to live here.
 
 For WWT corporate-ready, genericized skills, see `wwt/ai-skills-catalog`.
 
-## Autoskill: vault-mcp-sync
+**Autoskills (`as-*`) are private** and live in `sam-ueckert/claude-config` (private repo),
+not here. Do not add `as-*` prefixed skills to this repo.
+
+## Vault-mcp sync
 
 If you're about to edit `server.py` or `vault_core.py` under `skills/secret-vault/mcp-server/`,
-**stop** — invoke the `as-vault-mcp-sync` autoskill instead, which will redirect the
-change to the source repo and sync back.
+**stop** — edit in `sam-ueckert/vault-mcp` and run `bash ~/repos/vault-mcp/sync.sh`.
+See the `as-vault-mcp-sync` skill in `sam-ueckert/claude-config` for the full redirect workflow.
